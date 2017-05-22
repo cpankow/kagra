@@ -205,18 +205,25 @@ for net_idx, (label, globpat) in enumerate(pspecs.iteritems()):
     i = 0
     for key, filegroup in itertools.groupby(sorted(files, key=grep_spin), grep_spin):
         ax = plt.subplot(gs[net_idx,3*i:3*(i+1)])
+
+        m = Basemap(projection='cyl', fix_aspect=False, \
+                    llcrnrlat=-20, urcrnrlat=-1, \
+                    llcrnrlon=-165, urcrnrlon=-155)
         if i == 0:
-            plt.ylabel(label)
+            m.drawparallels(np.arange(-90., 90., 5.), labels=[1, 0, 0, 0],
+                    labelstyle='+/-', linewidth=0.0)
+        if label == pspecs.keys()[-1]:
+            merid = m.drawmeridians(np.arange(0., 360., 3.), labels=[0, 0, 0, 1], labelstyle='+/-', linewidth=0.0)
+            for _, txt in merid.values():
+                txt[-1].set_rotation(45)
+
+        if i == 0:
+            plt.ylabel(label, labelpad=30)
         if label == pspecs.keys()[0]:
             plt.xlabel(r"$a_{1,2} = %s$" % key[4:])
             ax.xaxis.set_label_position('top')
-        i += 1
 
-        m = Basemap(projection='cyl', \
-                    llcrnrlat=-15, urcrnrlat=-5, llcrnrlon=-165, urcrnrlon=-155)
-        m.drawparallels(np.arange(-90., 90., 45.), labels=[1, 0, 0, 0],
-                    labelstyle='+/-')
-        m.drawmeridians(np.arange(0., 360., 45.))  #,labels=[0,0,0,1],labelstyle='+/-')
+        i += 1
 
         m.drawmapboundary()
         m.drawcoastlines(linewidth=0.5)
@@ -242,7 +249,8 @@ for net_idx, (label, globpat) in enumerate(pspecs.iteritems()):
         # Underplot various network quantities
         #
         if args.underplot == "network":
-            m.contourf(ra_grid, dec_grid, net_pat, 1000, cmap=matplotlib.cm.Greys_r)
+            #m.contourf(ra_grid, dec_grid, net_pat, 1000, cmap=matplotlib.cm.Greys_r)
+            pass
 
         elif args.underplot == "dpf":
             m.contourf(ra_grid, dec_grid, dpf, 1000, cmap=matplotlib.cm.hsv,
@@ -337,7 +345,7 @@ for net_idx, (label, globpat) in enumerate(pspecs.iteritems()):
                 snrs[d] = None
             timing = get_timing_dict(snrs, snr)
             exp_err_reg = solid_angle_error(inj_loc, timing, inj[enum].geocent_end_time)
-            exp_err_reg = (180 / np.pi)**2 * np.squeeze(exp_err_reg)[0]
+            exp_err_reg = (180 / np.pi)**2 * np.squeeze(exp_err_reg)
             print "Expected error region size vs realized:"
             print exp_err_reg, prb68 * pix_size
 
