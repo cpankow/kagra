@@ -30,6 +30,20 @@ def load_injections(fname):
     xmldoc = utils.load_filename(fname, contenthandler=ligolw.LIGOLWContentHandler)
     return lsctables.SimInspiralTable.get_table(xmldoc)
 
+def get_eff_sample_path(enum, category):
+    if category == "HLV":
+        _bpath = "/projects/b1011/spinning_runs/freezingparams_20160402_IMR/"
+        subpath = "/".join((enum, "none/post/posterior_samples.dat"))
+    elif category == "HKLV":
+        _bpath = "/projects/b1011/kagra/HLVK/"
+        subpath = "/".join((enum, "post/posterior_samples.dat"))
+    elif category == "HIKLV":
+        _bpath = "/projects/b1011/kagra/HLVKI/"
+        subpath = "/".join((enum, "post/posterior_samples.dat"))
+
+    assert os.path.exists(os.path.join(_bpath, subpath))
+    return os.path.join(_bpath, subpath)
+
 def parse_pathspecs(pspecs):
     out = {}
     for ps in pspecs:
@@ -45,6 +59,7 @@ class Plottable(object):
     _scales = {
         "snr": {"vmin": 10, "vmax": 20},
         "error_region": {"vmin": 0, "vmax": 64},
+        "eff_samp": {"vmin": 0, "vmax": 2000},
         None: {"vmin": 0, "vmax": 64}
     }
 
@@ -291,18 +306,26 @@ for label, globpat in pspecs.iteritems():
         error_regions[2][label].append(prb95 * pix_size)
         assert error_regions[0][label][-1] < 1e3
 
-        snr = "/".join(filename.split("/")[:-2]) + "/snr.txt"
+        eff_samp = "/".join(filename.split("/")[:-1]) + "/posterior_samples.dat"
+        eff_samp = get_eff_sample_path(str(enum), category=label)
+
+        #snr = "/".join(filename.split("/")[:-2]) + "/snr.txt"
+        snr = "/".join(eff_samp.split("/")[:-2]) + "/snr.txt"
         with open(snr, "r") as snrf:
             snrs = dict([map(str.strip, l.split(":")) for l in snrf.readlines()])
         for k in snrs:
             snrs[k] = float(snrs[k])
         print snrs
 
+        eff_samp = len(np.loadtxt(eff_samp, skiprows=1))
+
         cmap = cspecs[label]
         if cmap.quant == "error_region":
             linecolor = cmap(prb90 * pix_size)
         elif cmap.quant == "snr":
             linecolor = cmap(snrs["Network"])
+        elif cmap.quant == "eff_samp":
+            linecolor = cmap(eff_samp)
 
         #
         # Expected error regions
