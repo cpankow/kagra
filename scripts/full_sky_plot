@@ -40,6 +40,8 @@ def get_eff_sample_path(enum, category):
     elif category == "HIKLV":
         _bpath = "/projects/b1011/kagra/HLVKI/"
         subpath = "/".join((enum, "post/posterior_samples.dat"))
+    else:
+        subpath = "/".join((enum, "post/posterior_samples.dat"))
 
     assert os.path.exists(os.path.join(_bpath, subpath))
     return os.path.join(_bpath, subpath)
@@ -307,7 +309,8 @@ for label, globpat in pspecs.iteritems():
         assert error_regions[0][label][-1] < 1e3
 
         eff_samp = "/".join(filename.split("/")[:-1]) + "/posterior_samples.dat"
-        eff_samp = get_eff_sample_path(str(enum), category=label)
+        if not os.path.exists(eff_samp):
+            eff_samp = get_eff_sample_path(str(enum), category=label)
 
         #snr = "/".join(filename.split("/")[:-2]) + "/snr.txt"
         snr = "/".join(eff_samp.split("/")[:-2]) + "/snr.txt"
